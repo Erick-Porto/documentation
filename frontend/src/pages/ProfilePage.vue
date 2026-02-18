@@ -40,7 +40,7 @@
                   color="primary"
                   track-color="grey-3"
                   class="q-mb-sm cursor-pointer"
-                  @click="$router.push(`/docs/${doc.slug}`)"
+                  @click="goToDoc(doc.slug)"
                 >
                   <q-avatar size="60px" class="bg-grey-2">
                     <q-icon :name="doc.icon || 'article'" color="grey-5" size="30px" />
@@ -84,6 +84,7 @@
 import { ref, onMounted } from 'vue';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
+import { useRouter } from 'vue-router';
 
 interface Doc {
   _id: string;
@@ -105,10 +106,14 @@ interface UserProfile {
 }
 
 const $q = useQuasar();
+const router = useRouter();
 const profile = ref<UserProfile | null>(null);
-const allDocs = ref<Doc[]>([]); // Agora guardamos todos os docs aqui
+const allDocs = ref<Doc[]>([]);
 
-// Função que cruza o ID do documento atual com a tabela de progresso do usuário
+const goToDoc = (slug: string) => {
+  void router.push(`/docs/${slug}`); // O 'void' deixa o Linter feliz!
+};
+
 const getDocProgress = (docId: string) => {
   const prog = profile.value?.progress?.find(p => p.docId === docId);
   return {

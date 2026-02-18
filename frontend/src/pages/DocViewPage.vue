@@ -151,13 +151,12 @@ watch(readProgress, (newVal) => {
   if (!doc.value || isCompleted.value) return;
 
   // Inicia um cronômetro de 1.5 segundos
-  progressTimeout = setTimeout(async () => {
-    try {
-      await api.patch(`/users/me/progress/${doc.value?._id}`, { percentage: newVal });
-    } catch (e) {
-      console.error('Falha ao salvar o progresso em background');
-    }
-  }, 1500); 
+  progressTimeout = setTimeout(() => {
+    api.patch(`/users/me/progress/${doc.value?._id}`, { percentage: newVal })
+      .catch(() => {
+        console.error('Falha ao salvar o progresso em background');
+      });
+  }, 1500);
 });
 
 </script>
