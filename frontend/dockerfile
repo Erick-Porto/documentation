@@ -1,0 +1,19 @@
+# Usa a imagem padrão do Node
+FROM node:20
+
+WORKDIR /app
+
+# Instala o CLI do Quasar globalmente
+RUN npm install -g @quasar/cli
+
+# Copia TODOS os arquivos do projeto primeiro (incluindo o quasar.config.js)
+COPY . .
+
+# Agora sim, roda o install! O Quasar vai achar os arquivos e o postinstall vai brilhar.
+RUN npm install
+
+# A porta padrão do servidor de desenvolvimento do Quasar
+EXPOSE 3000
+
+# Roda o projeto em modo de desenvolvimento
+CMD ["quasar", "dev"]
