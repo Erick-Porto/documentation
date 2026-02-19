@@ -10,11 +10,19 @@
         
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-4">
-            <q-input outlined v-model="icon" label="Ícone (Material Design)" hint="Ex: star, code, rocket_launch">
+            <q-input outlined v-model="icon" label="Ícone do Tutorial (Nome ou URL)" hint="Ex: article OU https://site.com/logo.png">
               <template v-slot:prepend>
-                <q-icon :name="icon || 'article'" color="primary" />
+                <q-icon :name="icon.startsWith('http') ? 'img:' + icon : (icon || 'article')" color="primary" />
               </template>
             </q-input>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <q-input outlined v-model="badgeName" label="Nome da Conquista" hint="Ex: Mestre do GLPI" />
+          </div>
+
+          <div class="col-12 col-md-4">
+            <q-input outlined v-model="badgeIcon" label="Ícone da Conquista" hint="Ex: emoji_events, military_tech" />
           </div>
           <div class="col-12 col-md-6">
             <q-input outlined v-model="title" label="Título do Tutorial" lazy-rules :rules="[val => !!val || 'Obrigatório']" />
@@ -81,6 +89,8 @@ interface Doc {
   content: string;
   tags: string[];
   icon?: string;
+  badgeName?: string;
+  badgeIcon?: string;
 }
 
 const $q = useQuasar();
@@ -94,6 +104,8 @@ const tags = ref<string[]>([]);
 const content = ref('');
 const tab = ref('write');
 const loading = ref(false);
+const badgeName = ref('Leitor Curioso');
+const badgeIcon = ref('military_tech');
 
 // Controle de Modo (Criação vs Edição)
 const isEditing = ref(false);
@@ -121,6 +133,8 @@ onMounted(async () => {
         content.value = docToEdit.content;
         tags.value = docToEdit.tags || [];
         icon.value = docToEdit.icon || 'article';
+        badgeName.value = docToEdit.badgeName || 'Leitor Curioso';
+        badgeIcon.value = docToEdit.badgeIcon || 'military_tech';
       } else {
         $q.notify({ type: 'negative', message: 'Tutorial não encontrado.' });
         void router.push('/admin/docs');
@@ -174,20 +188,24 @@ const onSubmit = async () => {
       slug: slug.value,
       content: content.value,
       tags: tags.value,
-      authorId: getAuthorId()
+      authorId: getAuthorId(),
+      badgeName: badgeName.value,
+      badgeIcon: badgeIcon.value
+      
     };
 
     if (isEditing.value) {
-      // MODO EDIÇÃO: Atualiza o documento existente
-      await api.patch(`/docs/${editingId.value}`, payload);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { authorId, ...updatePayload } = payload;
+      
+      await api.patch(`/docs/${editingId.value}`, updatePayload);
       $q.notify({ type: 'positive', message: 'Tutorial atualizado com sucesso!' });
     } else {
-      // MODO CRIAÇÃO: Salva um novo documento
       await api.post('/docs', payload);
       $q.notify({ type: 'positive', message: 'Tutorial criado com sucesso!' });
     }
     
-    void router.push('/admin/docs'); // Após salvar, volta para a tabela de gestão
+    void router.push('/admin/docs');
   } catch {
     $q.notify({ type: 'negative', message: 'Erro ao salvar o tutorial.' });
   } finally {

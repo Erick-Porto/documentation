@@ -59,13 +59,15 @@ import { ref, onMounted } from 'vue';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
 
-// <-- Tipagem forte
 interface Doc {
   _id: string;
   title: string;
   slug: string;
   tags: string[];
   createdAt: string;
+  updatedAt?: string;
+  authorId?: { _id: string; name: string };
+  updatedBy?: { _id: string; name: string };
 }
 
 const $q = useQuasar();
@@ -77,6 +79,9 @@ const columns = [
   { name: 'slug', label: 'URL (Slug)', align: 'left' as const, field: 'slug', sortable: true },
   { name: 'tags', label: 'Tags', align: 'left' as const, field: 'tags' },
   { name: 'createdAt', label: 'Data de Criação', align: 'center' as const, field: 'createdAt', format: (val: string) => new Intl.DateTimeFormat('pt-BR').format(new Date(val)), sortable: true },
+  { name: 'author', label: 'Autor', align: 'left' as const, field: (row: Doc) => row.authorId?.name || 'Sistema', sortable: true},
+  { name: 'updatedAt', label: 'Última Edição', align: 'center' as const, field: 'updatedAt', format: (val: string) => val ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(val)) : '-',sortable: true },
+  { name: 'updatedBy', label: 'Editado por', align: 'center' as const, field: (row: Doc) => row.updatedBy?.name || '-', sortable: true },
   { name: 'actions', label: 'Ações', align: 'center' as const, field: 'actions' }
 ];
 

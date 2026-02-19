@@ -20,14 +20,17 @@ export class Document {
   @Prop([String])
   tags: string[];
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  authorId: Types.ObjectId;
-
   @Prop({ default: 'military_tech' })
   badgeIcon: string;
 
   @Prop({ default: 'Leitor Curioso' })
   badgeName: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  authorId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  updatedBy: Types.ObjectId;
 }
 
 export const DocumentSchema = SchemaFactory.createForClass(Document);

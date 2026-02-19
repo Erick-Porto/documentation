@@ -43,7 +43,7 @@
                   @click="goToDoc(doc.slug)"
                 >
                   <q-avatar size="60px" class="bg-grey-2">
-                    <q-icon :name="doc.icon || 'article'" color="grey-5" size="30px" />
+                    <q-icon :name="doc.icon?.startsWith('http') ? 'img:' + doc.icon : (doc.icon || 'article')" color="grey-5" size="30px" />
                   </q-avatar>
                   
                   <q-tooltip class="bg-grey-9 text-body2">
@@ -56,9 +56,9 @@
                   round
                   color="primary"
                   size="xl"
-                  :icon="doc.icon || 'article'"
+                  :icon="doc.icon?.startsWith('http') ? 'img:' + doc.icon : (doc.icon || 'article')"
                   class="shadow-4 q-mb-sm"
-                  :to="`/docs/${doc.slug}`"
+                  @click="goToDoc(doc.slug)"
                 >
                   <q-tooltip class="bg-primary text-body2">
                     {{ doc.title }} (Concluído!)
@@ -86,6 +86,7 @@ import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 
+// 1. Atualizamos a interface para ficar igualzinha à da DocViewPage
 interface Doc {
   _id: string;
   title: string;
@@ -94,9 +95,9 @@ interface Doc {
 }
 
 interface UserProgress {
-  docId: string;
-  highestPercentage: number;
-  isCompleted: boolean;
+  percentage: number;
+  documentId?: string | { _id: string };
+  document?: string | { _id: string };
 }
 
 interface UserProfile {
@@ -111,29 +112,33 @@ const profile = ref<UserProfile | null>(null);
 const allDocs = ref<Doc[]>([]);
 
 const goToDoc = (slug: string) => {
-  void router.push(`/docs/${slug}`); // O 'void' deixa o Linter feliz!
+  void router.push(`/docs/${slug}`);
 };
 
 const getDocProgress = (docId: string) => {
-  const prog = profile.value?.progress?.find(p => p.docId === docId);
+  const prog = profile.value?.progress?.find((p: UserProgress) => {
+    const targetId = 
+      (typeof p.documentId === 'object' ? p.documentId?._id : p.documentId) || 
+      (typeof p.document === 'object' ? p.document?._id : p.document);
+      
+    return targetId === docId;
+  });
+
   return {
-    percentage: prog?.highestPercentage || 0,
-    isCompleted: prog?.isCompleted || false
+    percentage: prog?.percentage || 0,
+    isCompleted: (prog?.percentage || 0) >= 1
   };
 };
 
 const fetchData = async () => {
   try {
-    // Busca todos os tutoriais disponíveis para exibir as medalhas cinzas
     const docsRes = await api.get<Doc[]>('/docs');
     allDocs.value = docsRes.data;
 
-    // Busca o perfil com o array do que ele já leu
-    const profileRes = await api.get<UserProfile>('/users/me/profile');
+    const profileRes = await api.get<UserProfile>('/users/me/profile'); 
     profile.value = profileRes.data;
-
   } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao carregar os dados.' });
+    $q.notify({ type: 'negative', message: 'Erro ao carregar os dados do perfil.' });
   }
 };
 

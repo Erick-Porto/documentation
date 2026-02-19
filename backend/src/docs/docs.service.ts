@@ -17,19 +17,26 @@ export class DocsService {
     }
 
     async findAll(): Promise<Document[]> {
-        return this.documentModel.find().exec();
+        return this.documentModel.find()
+      .populate('authorId', 'name')
+      .populate('updatedBy', 'name')
+      .exec();
     }
 
     async findOneBySlug(slug: string): Promise<Document> {
-        const document = await this.documentModel.findOne({ slug }).exec();
+        const document = await this.documentModel.findOne({ slug })
+        .populate('authorId', 'name linkedin corp_role')
+        .populate('updatedBy', 'name')
+        .exec();
+
         if (!document) {
-            throw new NotFoundException(`Document with slug "${slug}" not found`);
+        throw new NotFoundException(`Tutorial com slug "${slug}" não encontrado`);
         }
         return document;
     }
 
     async update(id: string, updateDocumentDto: UpdateDocumentDto): Promise<Document> {
-        const updatedDocument = await this.documentModel.findOneAndUpdate({ id }, updateDocumentDto, { new: true }).exec();
+        const updatedDocument = await this.documentModel.findByIdAndUpdate(id, updateDocumentDto, { returnDocument: 'after' }).exec();
         if (!updatedDocument) {
             throw new NotFoundException(`Document with id "${id}" not found`);
         }

@@ -1,25 +1,41 @@
-// Quasar SCSS (& Sass) Variables
+// Quasar Sass (& SCSS) Variables
 // --------------------------------------------------
-// To customize the look and feel of this app, you can override
-// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+// Documentação das cores: https://quasar.dev/style/color-palette
 
-// Check documentation for full list of Quasar variables
+// --- PALETA TI | CFCSN ---
+$grena:         #7d0400; // Cor principal (Primary)
+$grena-light:   #a00001; // Secundária, botões de destaque
+$grena-dark:    #4d0001; // Elementos escuros, texto de alto contraste
+$grena-lighter: #c40001; // Acentos, badges, hover
 
-// Your own variables (that are declared here) and Quasar's own
-// ones will be available out of the box in your .vue/.scss/.sass files
+$background-light: #ffffff;
+$background-subtle: #f8f5f5; // Um branco levemente "quente" para fundos alternativos
 
-// It's highly recommended to change the default colors
-// to match your app's branding.
-// Tip: Use the "Theme Builder" on Quasar's documentation website.
+// --- MAPEAMENTO PARA O QUASAR ---
 
-$primary: #1976d2;
-$secondary: #26a69a;
-$accent: #9c27b0;
+// Primary: O Grená principal. Usado em toolbars, botões principais.
+$primary   : $grena;
 
-$dark: #1d1d1d;
-$dark-page: #121212;
+// Secondary: O tom médio. Usado para elementos que precisam chamar atenção sem brigar com o primário.
+$secondary : $grena-light;
 
-$positive: #21ba45;
-$negative: #c10015;
-$info: #31ccec;
-$warning: #f2c037;
+// Accent: O tom mais vibrante. Ótimo para badges de notificação ou botões de ação flutuantes (FAB).
+$accent    : $grena-lighter;
+
+// Dark: Usado para textos principais ou fundos de modo escuro.
+$dark      : $grena-dark;
+
+// Positive: Mantemos verde para sucesso, mas um tom mais sóbrio.
+$positive  : #21ba45;
+
+// Negative: Usamos o tom mais vibrante de grená para erros, mantendo a marca.
+$negative  : $grena-lighter;
+
+// Info & Warning: Tons padrão ajustados para combinar.
+$info      : #31ccec;
+$warning   : #f2c037;
+
+// --- TIPOGRAFIA E BORDAS ---
+$body-font-size   : 15px; // Um pouco maior para elegância
+$typography-font-family : 'Roboto', '-apple-system', 'Helvetica Neue', Helvetica, Arial, sans-serif !default;
+$button-border-radius: 8px; // Botões mais arredondados e modernos

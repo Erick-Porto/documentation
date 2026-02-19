@@ -9,7 +9,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   
   @UseGuards(AuthGuard)
-  @Get('me/profile')
+  @Get('me')
   async getProfile(@Request() req: any) {
     return this.usersService.getProfile(req.user.sub);
   }

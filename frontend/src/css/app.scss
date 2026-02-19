@@ -1,1 +1,65 @@
-// app global css in SCSS form
+/* app.scss - Estilos Globais do TI | CFCSN */
+
+// Importa a fonte Roboto (opcional, mas recomendado pelo Quasar)
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+// --- Variáveis CSS Nativas (para usar em style="") ---
+:root {
+  --q-grena: #7d0400;
+  --q-grena-light: #a00001;
+  --q-grena-dark: #4d0001;
+  --q-grena-lighter: #c40001;
+  --q-background-subtle: #f8f5f5;
+}
+
+body {
+  background-color: var(--q-background-subtle); // Fundo geral não é 100% branco, é mais suave
+  color: var(--q-grena-dark); // Texto padrão num tom muito escuro de grená, não preto puro
+}
+
+// --- REFINAMENTO DE COMPONENTES QUASAR ---
+
+// Cards: Mais modernos, com sombras suaves e sem bordas duras
+.q-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; // Sombra "difusa" e elegante
+  border-radius: 12px !important; // Cantos arredondados
+  border: none !important; // Remove bordas padrão se houver
+}
+
+// Botões: Mais elegantes
+.q-btn {
+  text-transform: none !important; // Remove o TUDO MAIÚSCULO padrão do Material Design
+  font-weight: 500;
+  letter-spacing: 0.5px;
+
+  // Botões "flat" (sem fundo) usam a cor secundária
+  &--flat {
+    color: var(--q-grena-light) !important;
+  }
+}
+
+// Títulos e Cabeçalhos
+h1, h2, h3, h4, h5, h6 {
+  color: var(--q-grena);
+  font-weight: 700;
+}
+
+// Inputs e Campos de Texto
+.q-field__native, .q-field__prefix, .q-field__suffix, .q-field__input {
+  color: var(--q-grena-dark) !important;
+}
+
+// Ajuste fino para badges para ficarem mais sofisticados
+.q-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+// Uma classe utilitária para textos de destaque
+.text-brand-gradient {
+  background: linear-gradient(45deg, var(--q-grena), var(--q-grena-lighter));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}

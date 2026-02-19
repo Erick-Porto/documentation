@@ -25,4 +25,12 @@ export class CreateDocDto {
   @IsString()
   @IsOptional()
   icon?: string;
+
+  @IsOptional()
+  @IsString()
+  badgeIcon?: string;
+
+  @IsOptional()
+  @IsString()
+  badgeName?: string;
 }

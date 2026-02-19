@@ -85,7 +85,22 @@ export default defineConfig((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
     framework: {
-      config: {},
+      config: {
+        brand: {
+          // Nossa paleta Grena CFCSN
+          primary: '#7d0400',   // --grena (Cor principal)
+          secondary: '#a00001', // --grena-light (Acentos)
+          accent: '#c40001',    // --grena-lighter (Destaques)
+          
+          dark: '#4d0001',      // --grena-dark (Texto elegante e fundos escuros)
+          
+          // Mantemos os padrões para feedback
+          positive: '#21BA45',
+          negative: '#C10015',
+          info: '#31CCEC',
+          warning: '#F2C037'
+        }
+      },
 
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
@@ -98,7 +113,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Notify'],
+      plugins: ['Notify', 'Dialog', 'Loading'],
     },
 
     // animations: 'all', // --- includes all animations

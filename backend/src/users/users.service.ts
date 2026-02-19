@@ -53,7 +53,7 @@ export class UsersService {
         }
 
         const updatedUser = await this.userModel
-            .findByIdAndUpdate(id, updateUserDto, { new: true })
+            .findByIdAndUpdate(id, updateUserDto, { returnDocument: 'after' })
             .select('-password')
             .exec();
 
@@ -74,7 +74,7 @@ export class UsersService {
     return this.progressModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId), docId: new Types.ObjectId(docId) },
       { isCompleted: true },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     ).exec();
   }
 
@@ -93,7 +93,7 @@ export class UsersService {
         return this.progressModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), docId: new Types.ObjectId(docId) },
             updateData,
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         ).exec();
     }
 

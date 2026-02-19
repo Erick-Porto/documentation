@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Patch, Request } from '@nestjs/common';
 import { DocsService } from './docs.service';
 import { CreateDocDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
@@ -23,12 +23,13 @@ export class DocsController {
     async findOneBySlug(@Param('slug') slug: string) {
         return this.docsService.findOneBySlug(slug);
     }
-
+    
     @UseGuards(AuthGuard)
-    @Put(':id')
-    async update(@Param('id') id: string, @Body() updateDocumentDto: UpdateDocumentDto) {
-        return this.docsService.update(id, updateDocumentDto);
-    }
+    @Patch(':id')
+    update(@Request() req: any, @Param('id') id: string, @Body() updateDocumentDto: UpdateDocumentDto) {
+    updateDocumentDto.updatedBy = req.user.sub; 
+    return this.docsService.update(id, updateDocumentDto);
+  }
 
     @UseGuards(AuthGuard)
     @Delete(':id')

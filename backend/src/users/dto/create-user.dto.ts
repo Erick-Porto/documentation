@@ -13,7 +13,15 @@ export class CreateUserDto {
   @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
   password: string;
 
-  @IsOptional() // Não é obrigatório enviar na criação
+  @IsOptional()
   @IsString()
   role?: string;
+
+  @IsOptional()
+  @IsString()
+  corp_role?: string;
+
+  @IsOptional()
+  @IsString()
+  linkedin?: string;
 }

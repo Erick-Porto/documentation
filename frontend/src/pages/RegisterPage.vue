@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center bg-grey-2">
-    <q-card class="auth-card shadow-4 q-pa-sm" bordered>
+    <q-card class="auth-card-modern q-pa-md bg-white" bordered>
       <q-card-section class="text-center">
         <div class="text-h5 text-weight-bolder text-primary">Criar Conta</div>
         <div class="text-subtitle2 text-grey-7 q-mt-sm">Junte-se para visualizar as documentações</div>
@@ -21,7 +21,7 @@
             outlined 
             v-model="email" 
             type="email" 
-            label="E-mail corporativo" 
+            label="E-mail pessoal" 
             lazy-rules
             :rules="[val => !!val || 'O e-mail é obrigatório']"
           />
@@ -36,6 +36,20 @@
               val => !!val || 'A senha é obrigatória',
               val => val.length >= 6 || 'A senha deve ter no mínimo 6 caracteres'
             ]"
+          />
+
+          <q-input 
+            outlined 
+            v-model="linkedin" 
+            type="text" 
+            label="LinkedIn (caso não preencha seu perfil ficará com o link da home da plataforma)" 
+          />
+
+          <q-input 
+            outlined 
+            v-model="corp_role" 
+            type="text" 
+            label="Cargo na empresa (ex: Coordenador de TI, Analista de TI, Tecnico de TI, etc.)"
           />
 
           <div class="q-mt-lg">
@@ -64,6 +78,8 @@ import { isAxiosError } from 'axios';
 const name = ref('');
 const email = ref('');
 const password = ref('');
+const corp_role = ref('');
+const linkedin = ref('');
 const loading = ref(false);
 const router = useRouter();
 const $q = useQuasar();
@@ -74,12 +90,14 @@ const onSubmit = async () => {
     await api.post('/users', {
       name: name.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      corp_role: corp_role.value,
+      linkedin: linkedin.value
     });
 
     $q.notify({ type: 'positive', message: 'Conta criada com sucesso! Faça seu login.' });
     await router.push('/auth/login');
-  } catch (error: unknown) { // <-- Tratamento rigoroso de erro
+  } catch (error: unknown) {
     let errorMsg = 'Erro ao criar conta. Tente novamente.';
     if (isAxiosError(error) && error.response?.data?.message) {
       errorMsg = error.response.data.message;
