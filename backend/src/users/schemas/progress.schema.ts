@@ -9,7 +9,7 @@ export class Progress extends MongooseDoc {
   @Prop({ type: Types.ObjectId, ref: 'Document', required: true })
   docId: Types.ObjectId;
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isCompleted: boolean;
 
   @Prop({ default: 0 })

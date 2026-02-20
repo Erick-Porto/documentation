@@ -10,7 +10,7 @@ declare module '@vue/runtime-core' {
 }
 
 // Altere para a URL e porta corretas do seu NestJS
-const api = axios.create({ baseURL: 'http://192.168.100.81:3000' });
+const api = axios.create({ baseURL: 'http://localhost:3000' });
 
 export default boot(({ app, router }) => {
   api.interceptors.response.use(
@@ -24,9 +24,9 @@ export default boot(({ app, router }) => {
         delete api.defaults.headers.common['Authorization'];
         void router.push('/auth/login');
       }
-      
-      return Promise.reject(error as Error); 
-    }
+
+      return Promise.reject(error as Error);
+    },
   );
   // INTERCEPTOR: Antes de toda requisição, pega o token do localStorage
   api.interceptors.request.use((config) => {

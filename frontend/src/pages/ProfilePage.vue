@@ -3,10 +3,15 @@
     <h4 class="text-weight-bold q-my-none text-grey-9 q-mb-lg">Meu Perfil</h4>
 
     <div class="row q-col-gutter-lg">
-      
       <div class="col-12 col-md-4">
         <q-card bordered flat class="text-center q-pa-lg bg-white shadow-2">
-          <q-avatar size="100px" font-size="52px" color="primary" text-color="white" class="q-mb-md shadow-4">
+          <q-avatar
+            size="100px"
+            font-size="52px"
+            color="primary"
+            text-color="white"
+            class="q-mb-md shadow-4"
+          >
             {{ profile?.name?.charAt(0).toUpperCase() || 'U' }}
           </q-avatar>
           <div class="text-h6 text-weight-bold">{{ profile?.name }}</div>
@@ -21,16 +26,16 @@
               <q-icon name="military_tech" color="warning" class="q-mr-sm" size="md" />
               Conquistas e Progresso
             </div>
-            <div class="text-caption text-grey-6">Complete a leitura para colorir suas medalhas.</div>
+            <div class="text-caption text-grey-6">
+              Complete a leitura para colorir suas medalhas.
+            </div>
           </q-card-section>
 
           <q-separator />
 
           <q-card-section class="q-pa-lg">
-            
             <div class="row q-gutter-xl justify-center">
               <div v-for="doc in allDocs" :key="doc._id" class="text-center column items-center">
-                
                 <q-circular-progress
                   v-if="!getDocProgress(doc._id).isCompleted"
                   show-value
@@ -43,9 +48,15 @@
                   @click="goToDoc(doc.slug)"
                 >
                   <q-avatar size="60px" class="bg-grey-2">
-                    <q-icon :name="doc.icon?.startsWith('http') ? 'img:' + doc.icon : (doc.icon || 'article')" color="grey-5" size="30px" />
+                    <q-icon
+                      :name="
+                        doc.icon?.startsWith('http') ? 'img:' + doc.icon : doc.icon || 'article'
+                      "
+                      color="grey-5"
+                      size="30px"
+                    />
                   </q-avatar>
-                  
+
                   <q-tooltip class="bg-grey-9 text-body2">
                     {{ doc.title }} ({{ Math.round(getDocProgress(doc._id).percentage * 100) }}%)
                   </q-tooltip>
@@ -56,7 +67,7 @@
                   round
                   color="primary"
                   size="xl"
-                  :icon="doc.icon?.startsWith('http') ? 'img:' + doc.icon : (doc.icon || 'article')"
+                  :icon="doc.icon?.startsWith('http') ? 'img:' + doc.icon : doc.icon || 'article'"
                   class="shadow-4 q-mb-sm"
                   @click="goToDoc(doc.slug)"
                 >
@@ -65,17 +76,17 @@
                   </q-tooltip>
                 </q-btn>
 
-                <div class="text-caption text-weight-bold text-grey-8 text-ellipsis" style="max-width: 90px; text-align: center; line-height: 1.2;">
+                <div
+                  class="text-caption text-weight-bold text-grey-8 text-ellipsis"
+                  style="max-width: 90px; text-align: center; line-height: 1.2"
+                >
                   {{ doc.title }}
                 </div>
-
               </div>
             </div>
-            
           </q-card-section>
         </q-card>
       </div>
-
     </div>
   </q-page>
 </template>
@@ -95,9 +106,9 @@ interface Doc {
 }
 
 interface UserProgress {
-  percentage: number;
-  documentId?: string | { _id: string };
-  document?: string | { _id: string };
+  docId: string;
+  highestPercentage: number;
+  isCompleted: boolean;
 }
 
 interface UserProfile {
@@ -116,17 +127,13 @@ const goToDoc = (slug: string) => {
 };
 
 const getDocProgress = (docId: string) => {
-  const prog = profile.value?.progress?.find((p: UserProgress) => {
-    const targetId = 
-      (typeof p.documentId === 'object' ? p.documentId?._id : p.documentId) || 
-      (typeof p.document === 'object' ? p.document?._id : p.document);
-      
-    return targetId === docId;
-  });
+  // 1. Busca simplificada usando o nome exato do campo (docId)
+  const prog = profile.value?.progress?.find((p: UserProgress) => p.docId === docId);
 
   return {
-    percentage: prog?.percentage || 0,
-    isCompleted: (prog?.percentage || 0) >= 1
+    percentage: prog?.highestPercentage || 0,
+    // 2. Garantia dupla: consideramos concluído se a flag for true OU se a porcentagem for 100% (1)
+    isCompleted: prog?.isCompleted || (prog?.highestPercentage || 0) >= 1,
   };
 };
 
@@ -135,7 +142,7 @@ const fetchData = async () => {
     const docsRes = await api.get<Doc[]>('/docs');
     allDocs.value = docsRes.data;
 
-    const profileRes = await api.get<UserProfile>('/users/me/profile'); 
+    const profileRes = await api.get<UserProfile>('/users/me');
     profile.value = profileRes.data;
   } catch {
     $q.notify({ type: 'negative', message: 'Erro ao carregar os dados do perfil.' });
