@@ -13,9 +13,9 @@ export class CreateDocDto {
   @IsNotEmpty()
   content: string;
 
-  @IsOptional()
   @IsArray()
-  @IsString({ each: true }) // Valida se cada item dentro do array é uma string
+  @IsString({ each: true })
+  @IsOptional()
   tags?: string[];
 
   @IsMongoId({ message: 'O ID do autor deve ser um ObjectId válido do MongoDB' })

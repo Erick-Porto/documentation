@@ -56,8 +56,8 @@
               </div>
 
               <div class="q-gutter-xs">
-                <q-badge v-for="tag in doc.tags" :key="tag" color="grey-2" text-color="grey-8">
-                  {{ tag }}
+                <q-badge v-for="tag in doc.tags" :key="tag._id" color="grey-2" text-color="grey-8">
+                  {{ tag.name || tag }}
                 </q-badge>
               </div>
             </div>
@@ -199,11 +199,16 @@ interface UserProgress {
   isCompleted: boolean;
 }
 
+interface Tags{
+  _id: string;
+  name: string;
+}
+
 interface Doc {
   _id: string;
   title: string;
   content: string;
-  tags: string[];
+  tags: Tags[];
   slug: string;
   createdAt: string;
   badgeName?: string;

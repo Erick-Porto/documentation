@@ -2,7 +2,9 @@
   <q-page padding>
     <div class="row items-center q-mb-lg">
       <q-btn flat round icon="arrow_back" color="primary" to="/admin/docs" class="q-mr-sm" />
-      <h4 class="text-weight-bold q-my-none text-grey-9">Novo Tutorial</h4>
+      <h4 class="text-weight-bold q-my-none text-grey-9">
+        {{ isEditing ? 'Editar Tutorial' : 'Novo Tutorial' }}
+      </h4>
     </div>
 
     <q-card flat bordered class="bg-white q-pa-md">
@@ -24,6 +26,7 @@
           <div class="col-12 col-md-4">
             <q-input outlined v-model="badgeIcon" label="Ícone da Conquista" hint="Ex: emoji_events, military_tech" />
           </div>
+          
           <div class="col-12 col-md-6">
             <q-input outlined v-model="title" label="Título do Tutorial" lazy-rules :rules="[val => !!val || 'Obrigatório']" />
           </div>
@@ -34,15 +37,15 @@
         </div>
 
         <q-select
-          outlined
           v-model="tags"
+          :options="filteredTags"
+          label="Tags"
+          multiple
           use-input
           use-chips
-          multiple
-          hide-dropdown-icon
-          input-debounce="0"
-          new-value-mode="add-unique"
-          label="Tags (Digite e aperte Enter)"
+          new-value-mode="add-unique" 
+          @filter="filterTags"
+          hint="Selecione uma tag existente ou digite e aperte Enter para criar uma nova."
         />
 
         <q-card bordered flat class="q-mt-md">
@@ -66,7 +69,7 @@
 
         <div class="row justify-end q-mt-lg">
           <q-btn label="Cancelar" flat color="grey-8" to="/admin/docs" class="q-mr-sm" />
-          <q-btn label="Salvar Tutorial" type="submit" color="primary" :loading="loading" icon="save" />
+          <q-btn :label="isEditing ? 'Atualizar Tutorial' : 'Salvar Tutorial'" type="submit" color="primary" :loading="loading" icon="save" />
         </div>
 
       </q-form>
@@ -81,21 +84,25 @@ import { useQuasar } from 'quasar';
 import { api } from 'boot/axios';
 import { marked } from 'marked';
 
-// Interface do Documento para manter o TypeScript feliz
 interface Doc {
   _id: string;
   title: string;
   slug: string;
   content: string;
-  tags: string[];
+  tags: (Tags | string)[];
   icon?: string;
   badgeName?: string;
   badgeIcon?: string;
 }
 
+interface Tags {
+  _id: string;
+  name: string;
+}
+
 const $q = useQuasar();
 const router = useRouter();
-const route = useRoute(); // Precisamos do route para ler a URL
+const route = useRoute();
 
 const icon = ref('')
 const title = ref('');
@@ -107,12 +114,38 @@ const loading = ref(false);
 const badgeName = ref('Leitor Curioso');
 const badgeIcon = ref('military_tech');
 
-// Controle de Modo (Criação vs Edição)
 const isEditing = ref(false);
 const editingId = ref('');
 
-// Quando a tela carregar, vamos ver se é uma edição
+const allTags = ref<string[]>([]);
+const filteredTags = ref<string[]>([]);
+
+const fetchTags = async () => {
+  try {
+    const res = await api.get('/tags');
+    allTags.value = res.data.map((tag: Tags) => tag.name);
+  } catch (error) {
+    console.error('Erro ao buscar tags:', error);
+    $q.notify({ type: 'warning', message: 'Não foi possível carregar a lista de tags existentes.' });
+  }
+};
+
+const filterTags = (val: string, update: (fn: () => void) => void) => {
+  update(() => {
+    if (val === '') {
+      filteredTags.value = allTags.value;
+    } else {
+      const needle = val.toLowerCase();
+      filteredTags.value = allTags.value.filter(
+        (v) => v.toLowerCase().includes(needle)
+      );
+    }
+  });
+};
+
 onMounted(async () => {
+  void fetchTags();
+
   const idParam = route.params.id;
   
   if (idParam) {
@@ -121,17 +154,16 @@ onMounted(async () => {
     loading.value = true;
 
     try {
-      // Como a nossa API não tem um GET por ID, buscamos todos e filtramos 
-      // (Para a escala da plataforma, isso funciona perfeitamente bem!)
       const response = await api.get<Doc[]>('/docs');
       const docToEdit = response.data.find(d => d._id === editingId.value);
 
       if (docToEdit) {
-        // Preenche o formulário com os dados do banco
         title.value = docToEdit.title;
         slug.value = docToEdit.slug;
         content.value = docToEdit.content;
-        tags.value = docToEdit.tags || [];
+        tags.value = docToEdit.tags?.map((t) => {
+          return typeof t === 'string' ? t : t.name;
+        }) || [];
         icon.value = docToEdit.icon || 'article';
         badgeName.value = docToEdit.badgeName || 'Leitor Curioso';
         badgeIcon.value = docToEdit.badgeIcon || 'military_tech';
@@ -148,8 +180,6 @@ onMounted(async () => {
 });
 
 watch(title, (newTitle) => {
-  // Só gera o slug automaticamente se estiver criando um novo.
-  // Na edição, o slug não deve mudar para não quebrar links antigos.
   if (!isEditing.value) {
     slug.value = newTitle
       .toLowerCase()
@@ -191,7 +221,6 @@ const onSubmit = async () => {
       authorId: getAuthorId(),
       badgeName: badgeName.value,
       badgeIcon: badgeIcon.value
-      
     };
 
     if (isEditing.value) {
@@ -215,12 +244,10 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-/* Estilo para deixar a área de texto com cara de código */
 .custom-textarea {
   font-family: 'Fira Code', 'Courier New', Courier, monospace;
   min-height: 400px;
 }
-/* Uma classe básica para a área de preview ficar mais legível */
 .markdown-body {
   line-height: 1.6;
   font-size: 16px;

@@ -44,8 +44,8 @@
         
         <template v-slot:body-cell-tags="props">
           <q-td :props="props">
-            <q-badge v-for="tag in props.row.tags" :key="tag" color="grey-3" text-color="grey-8" class="q-mr-xs">
-              {{ tag }}
+            <q-badge v-for="tag in props.row.tags" :key="tag._id" color="grey-3" text-color="grey-8" class="q-mr-xs">
+              {{ tag.name || tag }}
             </q-badge>
           </q-td>
         </template>
@@ -59,11 +59,16 @@ import { ref, onMounted } from 'vue';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
 
+interface Tags{
+  _id: string;
+  name: string;
+}
+
 interface Doc {
   _id: string;
   title: string;
   slug: string;
-  tags: string[];
+  tags: (Tags|string)[];
   createdAt: string;
   updatedAt?: string;
   authorId?: { _id: string; name: string };
@@ -77,7 +82,7 @@ const loading = ref(true);
 const columns = [
   { name: 'title', required: true, label: 'Título do Tutorial', align: 'left' as const, field: 'title', sortable: true },
   { name: 'slug', label: 'URL (Slug)', align: 'left' as const, field: 'slug', sortable: true },
-  { name: 'tags', label: 'Tags', align: 'left' as const, field: 'tags' },
+  { name: 'tags', label: 'Tags', align: 'left' as const, field: (row: Doc) => row.tags.map(t => typeof t === 'string' ? t : t.name).join(', ') },
   { name: 'createdAt', label: 'Data de Criação', align: 'center' as const, field: 'createdAt', format: (val: string) => new Intl.DateTimeFormat('pt-BR').format(new Date(val)), sortable: true },
   { name: 'author', label: 'Autor', align: 'left' as const, field: (row: Doc) => row.authorId?.name || 'Sistema', sortable: true},
   { name: 'updatedAt', label: 'Última Edição', align: 'center' as const, field: 'updatedAt', format: (val: string) => val ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(val)) : '-',sortable: true },
@@ -97,7 +102,6 @@ const fetchDocuments = async () => {
   }
 };
 
-// <-- Função separada para respeitar o "no-misused-promises"
 const executeDelete = async (doc: Doc) => {
   try {
     loading.value = true;
@@ -120,7 +124,7 @@ const confirmDelete = (doc: Doc) => {
     ok: { label: 'Apagar', color: 'negative' },
     persistent: true
   }).onOk(() => {
-    void executeDelete(doc); // <-- Uso correto
+    void executeDelete(doc);
   });
 };
 

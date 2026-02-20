@@ -28,11 +28,19 @@ export class UsersService {
     }
 
     async findAll(): Promise<User[]> {
-        return this.userModel.find().select('-password').exec();
+        return this.userModel
+        .find()
+        .populate('sector corpRoles')
+        .select('-password')
+        .exec();
     }
 
     async findOne(id: string): Promise<User> {
-        const user = await this.userModel.findById(id).exec();
+        const user = await this.userModel
+        .findById(id)
+        .populate('sector corpRoles')
+        .select('-password')
+        .exec();
         if (!user) {
             throw new NotFoundException('User not found');
         }
@@ -40,7 +48,12 @@ export class UsersService {
     }
 
     async findOneByEmail(email: string): Promise<User> {
-        const user = await this.userModel.findOne({ email }).exec();
+        const user = await this.userModel
+        .findOne({ email })
+        .populate('sector corpRoles')
+        .select('-password')
+        .exec();
+
         if (!user) {
             throw new NotFoundException('User not found');
         }
@@ -81,7 +94,6 @@ export class UsersService {
     async updateProgress(userId: string, docId: string, percentage: number): Promise<Progress> {
         const isCompleted = percentage >= 1;
 
-        // O $max garante que se ele tinha 79 e mandou 30, o banco mantém 79!
         const updateData: any = {
             $max: { highestPercentage: percentage }
         };

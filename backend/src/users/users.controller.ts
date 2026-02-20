@@ -3,18 +3,18 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
-
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   
-  @UseGuards(AuthGuard)
   @Get('me')
   async getProfile(@Request() req: any) {
     return this.usersService.getProfile(req.user.sub);
   }
 
-  @UseGuards(AuthGuard)
   @Patch('me/progress/:docId')
   async updateProgress(
     @Request() req: any, 
@@ -24,7 +24,7 @@ export class UsersController {
     return this.usersService.updateProgress(req.user.sub, docId, percentage);
   }
   
-  @UseGuards(AuthGuard)
+
   @Post('me/complete/:docId')
   async completeDoc(@Request() req: any, @Param('docId') docId: string) {
     return this.usersService.completeDocument(req.user.sub, docId);
@@ -36,23 +36,25 @@ export class UsersController {
   }
 
   @Get()
+  @Roles('Superadmin', 'admin')
   async findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
+  @Roles('Superadmin', 'admin')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
     
-  @UseGuards(AuthGuard)
-  @Put(':id')
+  @Patch(':id')
+  @Roles('Superadmin')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(AuthGuard)
   @Delete(':id')
+  @Roles('Superadmin')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

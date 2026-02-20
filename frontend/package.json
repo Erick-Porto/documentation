@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.0.1",
   "description": "All the necessary documentation to pretend you know what you're doing in this department where no one knows what they're doing.",
-  "productName": "Documentations App",
+  "productName": "CFCSN | Docs",
   "author": "Erick Ribeiro Porto <142067559+Erick-Porto@users.noreply.github.com>",
   "type": "module",
   "private": true,

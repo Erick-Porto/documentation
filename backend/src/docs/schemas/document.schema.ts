@@ -17,8 +17,8 @@ export class Document {
   @Prop({ required: true })
   content: string;
 
-  @Prop([String])
-  tags: string[];
+  @Prop({ type: [Types.ObjectId], ref: 'Tag' })
+  tags: Types.ObjectId[];
 
   @Prop({ default: 'military_tech' })
   badgeIcon: string;

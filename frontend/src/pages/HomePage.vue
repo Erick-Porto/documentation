@@ -53,8 +53,8 @@
 
           <q-card-section class="q-pt-none">
             <div class="q-gutter-xs row truncate-tags">
-              <q-badge v-for="tag in doc.tags" :key="tag" outline color="grey-6" class="q-pa-xs">
-                {{ tag }}
+              <q-badge v-for="tag in doc.tags" :key="tag._id" outline color="grey-6" class="q-pa-xs">
+                {{ tag.name || tag }}
               </q-badge>
             </div>
           </q-card-section>
@@ -70,11 +70,17 @@ import { ref, onMounted, computed } from 'vue';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
+
+interface Tags{
+  _id: string;
+  name: string;
+}
+
 interface Doc {
   _id: string;
   title: string;
   slug: string;
-  tags: string[];
+  tags: Tags[];
   icon: string;
   createdAt: string;
 }
@@ -105,7 +111,7 @@ const filteredDocs = computed(() => {
   const searchLower = search.value.toLowerCase();
   return documents.value.filter(doc => 
     doc.title.toLowerCase().includes(searchLower) ||
-    doc.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower))
+    doc.tags?.some((tag: Tags) => tag.name.toLowerCase().includes(searchLower))
   );
 });
 

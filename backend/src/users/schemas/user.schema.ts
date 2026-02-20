@@ -12,13 +12,16 @@ export class User {
   email: string;
 
   @Prop({ required: true })
-  password: string; // Lembre-se: no Service, teremos que fazer o hash (bcrypt) antes de salvar!
+  password: string;
 
-  @Prop({ enum: ['admin', 'user'], default: 'user' }) // Define um valor padrão
+  @Prop({ enum: ['superadmin', 'admin', 'user'], default: 'user' })
   role: string;
 
-  @Prop({ required: true, default: 'TI' })
-  corp_role: string;
+  @Prop({ type: [Types.ObjectId], ref: 'Sector' })
+  sector: Types.ObjectId[];
+
+  @Prop({ type: [Types.ObjectId], ref: 'CorpRole' })
+  corpRoles: Types.ObjectId[];
 
   @Prop([{ type: Types.ObjectId, ref: 'Document' }])
   completedDocs: Types.ObjectId[];
