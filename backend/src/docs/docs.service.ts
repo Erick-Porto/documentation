@@ -13,59 +13,79 @@ export class DocsService {
         @InjectModel(Tag.name) private tagModel: Model<Tag>
     ){}
 
-    async create(createDocumentDto: CreateDocDto): Promise<Document> {
-    const existingDoc = await this.documentModel.findOne({ slug: createDocumentDto.slug }).exec();
-    if (existingDoc) {
-        throw new ConflictException(`Documento com o slug "${createDocumentDto.slug}" já existe.`);
-    }
+    private async processTags(tags?: string[]): Promise<Types.ObjectId[]> {
+        const tagObjectIds: Types.ObjectId[] = [];
+        
+        if (!tags || tags.length === 0) return tagObjectIds;
 
-    const tagObjectIds:Types.ObjectId[] = [];
-
-    if (createDocumentDto.tags && createDocumentDto.tags.length > 0) {
-        for (const tagName of createDocumentDto.tags) {
+        for (const tagName of tags) {
             const cleanName = tagName.trim();
-                const tag = await this.tagModel.findOneAndUpdate(
+            const tag = await this.tagModel.findOneAndUpdate(
                 { name: cleanName },
                 { name: cleanName },
                 { upsert: true, new: true }
             ).exec();
 
-            tagObjectIds.push(tag._id);
+            tagObjectIds.push(tag._id as Types.ObjectId);
         }
+        
+        return tagObjectIds;
     }
 
-    const documentData = {
-        ...createDocumentDto,
-        tags: tagObjectIds
-    };
+    async create(createDocumentDto: CreateDocDto): Promise<Document> {
+        const existingDoc = await this.documentModel.findOne({ slug: createDocumentDto.slug }).exec();
+        if (existingDoc) {
+            throw new ConflictException(`Documento com o slug "${createDocumentDto.slug}" já existe.`);
+        }
 
-    const createdDocument = new this.documentModel(documentData);
-    return createdDocument.save();
-}
+        const finalTags = await this.processTags(createDocumentDto.tags);
+
+        const documentData = {
+            ...createDocumentDto,
+            tags: finalTags
+        };
+
+        const createdDocument = new this.documentModel(documentData);
+        return createdDocument.save();
+    }
 
     async findAll(): Promise<Document[]> {
         return this.documentModel.find()
-      .populate('authorId', 'name')
-      .populate('updatedBy', 'name')
-      .populate('tags', 'name')
-      .exec();
+            .populate('authorId', 'name')
+            .populate('updatedBy', 'name')
+            .populate('tags', 'name')
+            .populate('targetSector', 'name')
+            .sort({ createdAt: -1 })
+            .exec();
     }
 
     async findOneBySlug(slug: string): Promise<Document> {
         const document = await this.documentModel.findOne({ slug })
-        .populate('authorId', 'name linkedin corp_role')
-        .populate('updatedBy', 'name')
-        .populate('tags', 'name')
-        .exec();
+            .populate('authorId', 'name linkedin corp_role')
+            .populate('updatedBy', 'name')
+            .populate('tags', 'name')
+            .populate('targetSector', 'name')
+            .exec();
 
         if (!document) {
-        throw new NotFoundException(`Tutorial com slug "${slug}" não encontrado`);
+            throw new NotFoundException(`Tutorial com slug "${slug}" não encontrado`);
         }
         return document;
     }
 
     async update(id: string, updateDocumentDto: UpdateDocumentDto): Promise<Document> {
-        const updatedDocument = await this.documentModel.findByIdAndUpdate(id, updateDocumentDto, { returnDocument: 'after' }).exec();
+        let updatedData = { ...updateDocumentDto };
+
+        if (updateDocumentDto.tags) {
+            updatedData.tags = await this.processTags(updateDocumentDto.tags) as any;
+        }
+
+        const updatedDocument = await this.documentModel.findByIdAndUpdate(
+            id, 
+            updatedData, 
+            { returnDocument: 'after' } 
+        ).exec();
+        
         if (!updatedDocument) {
             throw new NotFoundException(`Document with id "${id}" not found`);
         }

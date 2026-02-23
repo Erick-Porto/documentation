@@ -22,6 +22,24 @@ export class CorpRolesService {
         return this.corpRoleModel.find().exec();
     }
 
+    async update(id: string, name: string): Promise<CorpRole> {
+        const existing = await this.corpRoleModel.findOne({ name, _id: { $ne: id } }).exec();
+        if (existing) {
+            throw new ConflictException(`O cargo "${name}" já existe.`);
+        }
+
+        const updatedRole = await this.corpRoleModel.findByIdAndUpdate(
+            id,
+            { name },
+            { new: true }
+        ).exec();
+
+        if (!updatedRole) {
+            throw new NotFoundException('Cargo não encontrado.');
+        }
+        return updatedRole;
+    }
+
     async remove(id: string): Promise<void> {
         const result = await this.corpRoleModel.findByIdAndDelete(id).exec();
         if (!result) {

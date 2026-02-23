@@ -11,7 +11,7 @@
     <q-scroll-observer @scroll="onScroll" />
 
     <div class="row justify-center q-pa-md">
-      <div class="col-12 col-md-8 col-lg-6">
+      <div class="col-11">
         <q-btn
           flat
           color="primary"
@@ -70,7 +70,7 @@
           <q-separator class="q-my-xl" />
 
           <div class="text-center bg-grey-1 q-pa-md rounded-borders border-grey">
-            <div class="text-h6 text-grey-8 q-mb-sm">Fim do Tutorial</div>
+            <div class="text-h6 text-grey-8 q-mb-sm">Fim do Documento</div>
             <p class="text-body2 text-grey-6">
               Ao finalizar a leitura, marque este documento como concluído para atualizar seu
               progresso.
@@ -79,10 +79,10 @@
               <q-btn
                 v-if="isCompleted"
                 outline
-                color="secondary"
-                icon="picture_as_pdf"
-                label="Exportar PDF"
-                @click="generatePDF"
+                color="blue-8"
+                icon="description"
+                label="Exportar para Word"
+                @click="exportToWord"
               />
 
               <q-btn
@@ -99,93 +99,16 @@
       </div>
     </div>
   </q-page>
-
-  <div v-show="false">
-    <div id="pdf-template" class="pdf-container">
-      <div class="pdf-page flex flex-center column relative-position">
-        <img src="/logo-cfcsn.png" style="max-width: 300px; margin-bottom: 40px" />
-        <h1
-          class="text-weight-bolder text-center"
-          style="color: #7d0400; font-size: 3rem; line-height: 1.2"
-        >
-          {{ doc?.title }}
-        </h1>
-        <div class="absolute-bottom text-center q-pb-xl text-h6 text-grey-8">
-          Documentação Técnica elaborada por<br />
-          <a :href="doc?.authorId?.linkedin" target="_blank" style="text-decoration: none">
-            <strong>{{ doc?.authorId?.name }} - {{ doc?.authorId?.corp_role }}</strong>
-          </a>
-        </div>
-      </div>
-
-      <div class="html2pdf__page-break"></div>
-      <div class="pdf-page q-pa-xl">
-        <h3
-          class="text-weight-bold"
-          style="color: #7d0400; border-bottom: 2px solid #7d0400; padding-bottom: 10px"
-        >
-          Índice
-        </h3>
-
-        <ul
-          class="q-mt-lg text-h6 text-grey-9"
-          style="line-height: 2; list-style-type: none; padding: 0"
-        >
-          <li
-            v-for="item in tableOfContents"
-            :key="item.id"
-            :style="{ marginLeft: (item.level - 1) * 20 + 'px' }"
-          >
-            <span
-              style="
-                color: #7d0400;
-                text-decoration: none;
-                border-bottom: 1px dotted #ccc;
-                transition: color 0.3s;
-              "
-            >
-              {{ item.text }}
-            </span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="html2pdf__page-break"></div>
-
-      <div class="pdf-page q-pa-xl pdf-content-body">
-        <div v-html="parsedHtmlContent"></div>
-      </div>
-
-      <div class="html2pdf__page-break"></div>
-
-      <div class="pdf-page flex flex-center column" style="background-color: #7d0400; color: white">
-        <img
-          src="/logo-cfcsn-white.png"
-          style="max-width: 250px; filter: brightness(0) invert(1)"
-        />
-        <div class="q-mt-xl text-h5 text-weight-light">TI | CFCSN</div>
-        <div class="q-mt-md text-subtitle1">
-          <a
-            :href="doc?.authorId?.linkedin"
-            target="_blank"
-            style="color: white; text-decoration: underline"
-          >
-            {{ doc?.authorId?.name }} - {{ doc?.authorId?.corp_role }}
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import html2pdf from 'html2pdf.js';
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { api } from 'boot/axios';
 import { marked } from 'marked';
 import { useQuasar } from 'quasar';
-import { useRouter } from 'vue-router';
+import { asBlob } from 'html-docx-js-typescript';
+import { saveAs } from 'file-saver';
 
 interface TocItem {
   id: string;
@@ -216,20 +139,6 @@ interface Doc {
   authorId?: { _id: string; name: string; linkedin?: string; corp_role?: string };
 }
 
-interface JsPdfInstance {
-  internal: {
-    getNumberOfPages: () => number;
-    pageSize: {
-      getWidth: () => number;
-      getHeight: () => number;
-    };
-  };
-  setPage: (page: number) => void;
-  setFontSize: (size: number) => void;
-  setTextColor: (color: number) => void;
-  text: (text: string, x: number, y: number) => void;
-}
-
 const route = useRoute();
 const $q = useQuasar();
 const router = useRouter();
@@ -257,6 +166,21 @@ watch(
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = rawHtml;
 
+    const hrs = tempDiv.querySelectorAll('hr');
+    
+    hrs.forEach(hr => {
+      const nextEl = hr.nextElementSibling;
+      
+      if (nextEl && (nextEl.tagName === 'HR')) {
+        const pageBreak = document.createElement('br');
+        pageBreak.setAttribute('clear', 'all');
+        pageBreak.style.cssText = 'page-break-before: always;'; 
+        
+        nextEl.remove();
+        hr.replaceWith(pageBreak);
+      }
+    });
+
     const headings = tempDiv.querySelectorAll('h1, h2, h3');
     const toc: TocItem[] = [];
 
@@ -269,11 +193,13 @@ watch(
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
-      h.id = id;
+      
+      h.id = id; 
+      h.innerHTML = `<a name="${id}"></a>` + h.innerHTML;
 
       toc.push({
         id,
-        text: h.textContent || '',
+        text: text,
         level: parseInt(h.tagName.substring(1)),
       });
     });
@@ -284,61 +210,97 @@ watch(
   { immediate: true },
 );
 
-const generatePDF = () => {
-  $q.loading.show({ message: 'Gerando PDF com padrão corporativo...' });
+// NOVA FUNÇÃO EXPORTAR PARA WORD
+const exportToWord = async () => {
+  $q.loading.show({ message: 'Empacotando DOCX oficial...' });
 
-  setTimeout(() => {
-    const element = document.getElementById('pdf-template');
+  try {
+    const author = doc.value?.authorId as any;
+    const authorName = author?.name || 'Sistema';
+    const authorRole = author?.corp_role || (author?.corpRoles && author.corpRoles.length > 0 ? author.corpRoles[0].name : 'Equipe CFCSN');
 
-    if (!element) {
-      $q.loading.hide();
-      $q.notify({ type: 'negative', message: 'Erro interno ao carregar o template do PDF.' });
-      return;
-    }
-
-    const opt = {
-      margin: 0,
-      filename: `${doc.value?.slug || 'documentacao'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' as const },
+    const stripEmojis = (str: string) => {
+      if (!str) return '';
+      return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
     };
 
-    const worker = html2pdf().set(opt).from(element);
+    const header = `<!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Arial', sans-serif; font-size: 11pt; color: #000000; text-align: justify; }
+          h1, h2, h3, h4 { color: #7d0400; font-family: 'Arial', sans-serif; }
+          h1 { font-size: 18pt; border-bottom: 1px solid #cccccc; padding-bottom: 5pt; margin-top: 20pt; }
+          h2 { font-size: 14pt; margin-top: 15pt; }
+          h3 { font-size: 12pt; }
+          .page-break { page-break-before: always; }
+          
+          /* Ajustes da Capa */
+          .cover { text-align: center; margin-top: 100pt; }
+          .cover h1 { font-size: 32pt; border: none; margin-bottom: 10pt; }
+          .cover h3 { font-size: 16pt; color: #555555; }
+          
+          /* Ajustes do Índice */
+          .toc { margin-top: 30pt; }
+          .toc ul { list-style-type: none; padding-left: 0; }
+          .toc li { font-size: 12pt; margin-bottom: 8pt; }
+          .toc a { color: #0563C1; text-decoration: underline; cursor: pointer; }
+          
+          /* Imagens e Citações */
+          img { max-width: 100%; height: auto; margin-top: 10pt; margin-bottom: 10pt; }
+          a { color: #7d0400; text-decoration: underline; }
+          blockquote { border-left: 3pt solid #7d0400; padding-left: 10pt; color: #666666; font-style: italic; }
+          
+          /* Contra-capa */
+          .back-cover { background-color: #7d0400; color: #ffffff; text-align: center; padding: 250pt 20pt; height: 1000pt; }
+          .back-cover h2 { color: #ffffff !important; font-size: 24pt; border: none; margin-bottom: 15pt; }
+          .back-cover a { color: #ffffff !important; text-decoration: underline; font-size: 14pt; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+    `;
 
-    worker
-      .toPdf()
-      .get('pdf')
-      .then((pdf: JsPdfInstance) => {
-        const totalPages = pdf.internal.getNumberOfPages();
+    const cover = `
+      <div class="cover">
+        <h1>${stripEmojis(doc.value?.title || 'Documentação Técnica')}</h1>
+        <h3>Clube dos Funcionários - CFCSN</h3>
+        <br><br><br><br><br><br><br><br>
+        <p style="font-size: 14pt;">Elaborado por:<br>
+        <strong>${authorName} - ${authorRole}</strong></p>
+      </div>
+      <hr clear="all" class="page-break-before: always;"/>
+    `;
 
-        for (let i = 1; i <= totalPages; i++) {
-          pdf.setPage(i);
+    let tocHtml = `<div class="toc"><h2 style="border-bottom: 2px solid #7d0400; padding-bottom: 5pt; color: #7d0400;">Índice</h2><ul>`;
+    tableOfContents.value.forEach(item => {
+      const margin = (item.level - 1) * 20;
+      tocHtml += `<li style="margin-left: ${margin}px;"><a href="#${item.id}">${stripEmojis(item.text)}</a></li>`;
+    });
+    tocHtml += `</ul></div><hr clear="all" class="page-break-before: always;"/>`;
 
-          if (i > 1 && i < totalPages) {
-            pdf.setFontSize(10);
-            pdf.setTextColor(100);
 
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
+    const footer = `</body></html>`;
+    const cleanContent = stripEmojis(parsedHtmlContent.value);
+    
+    const fullHtml = header + cover + tocHtml + cleanContent + footer;
 
-            pdf.text(`Página ${i} de ${totalPages}`, pageWidth - 1.5, pageHeight - 0.4);
-          }
-        }
-      })
-      .then(() => {
-        return worker.save();
-      })
-      .then(() => {
-        $q.loading.hide();
-        $q.notify({ type: 'positive', message: 'PDF Exportado com Sucesso!' });
-      })
-      .catch((error: unknown) => {
-        console.error('Erro ao exportar o PDF:', error);
-        $q.loading.hide();
-        $q.notify({ type: 'negative', message: 'Falha ao exportar o PDF. Tente novamente.' });
-      });
-  }, 500);
+    // 8. Geração do Blob e Download
+    const blob = await asBlob(fullHtml, {
+      orientation: 'portrait',
+      margins: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+    });
+
+    saveAs(blob as Blob, `${doc.value?.slug || 'documentacao'}.docx`);
+
+    $q.loading.hide();
+    $q.notify({ type: 'positive', message: 'Documento exportado com sucesso!' });
+
+  } catch (error) {
+    console.error('Erro ao gerar DOCX:', error);
+    $q.loading.hide();
+    $q.notify({ type: 'negative', message: 'Erro ao gerar o arquivo.' });
+  }
 };
 
 const fetchDocument = async () => {
@@ -351,13 +313,18 @@ const fetchDocument = async () => {
       const userRes = await api.get('/users/me');
       const myProgress = userRes.data.progress || [];
 
-      // Agora o frontend procura pelo nome correto: docId
-      const docProgress = myProgress.find((p: UserProgress) => p.docId === doc.value?._id);
+      const docProgress = myProgress.find((p: UserProgress) => {
+        const idToCompare = typeof p.docId === 'object' ? p.docId._id : p.docId;
+        return idToCompare === doc.value?._id;
+      });
 
-      // Checamos a porcentagem correta (highestPercentage) ou a flag isCompleted
-      if (docProgress && (docProgress.isCompleted || docProgress.highestPercentage >= 1)) {
-        isCompleted.value = true;
-        readProgress.value = 1;
+      if (docProgress) {
+        readProgress.value = docProgress.highestPercentage || 0;
+
+        if (docProgress.isCompleted || docProgress.highestPercentage >= 1) {
+          isCompleted.value = true;
+          readProgress.value = 1;
+        }
       }
     } catch (e) {
       console.error('Erro ao buscar o progresso do usuário silenciosamente', e);
@@ -460,7 +427,7 @@ watch(readProgress, (newVal) => {
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3 {
-  color: var(--q-primary); /* Cor primária do Quasar */
+  color: var(--q-primary); 
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   font-weight: bold;
@@ -536,18 +503,5 @@ watch(readProgress, (newVal) => {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin: 1em 0;
-}
-</style>
-
-<style scoped>
-.pdf-page {
-  width: 100%;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.pdf-content-body img {
-  max-width: 100%;
-  height: auto;
 }
 </style>

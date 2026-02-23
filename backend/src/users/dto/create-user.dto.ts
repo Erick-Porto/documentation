@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, IsArray } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -15,13 +15,19 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
+  linkedin?: string;
+
+  @IsOptional()
+  @IsString()
   role?: string;
 
   @IsOptional()
-  @IsString()
-  corp_role?: string;
+  @IsArray()
+  @IsString({ each: true })
+  sector?: string[];
 
   @IsOptional()
-  @IsString()
-  linkedin?: string;
+  @IsArray()
+  @IsString({ each: true })
+  corpRoles?: string[];
 }

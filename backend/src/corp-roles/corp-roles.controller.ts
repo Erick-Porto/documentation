@@ -1,4 +1,4 @@
-import {Controller, Get, Post, Body, Param, UseGuards, Delete} from '@nestjs/common';
+import {Controller, Get, Post, Body, Param, UseGuards, Delete, Patch} from '@nestjs/common';
 import { CorpRolesService } from './corp-roles.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 
@@ -20,5 +20,10 @@ export class CorpRolesController {
     @Delete(':id')
     async remove(@Param('id') id: string) {
         return this.corpRolesService.remove(id);
+    }
+    
+    @Patch(':id')
+        async update(@Param('id') id: string, @Body('name') name: string) {
+        return this.corpRolesService.update(id, name);
     }
 }

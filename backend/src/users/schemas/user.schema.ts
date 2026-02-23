@@ -17,13 +17,13 @@ export class User {
   @Prop({ enum: ['superadmin', 'admin', 'user'], default: 'user' })
   role: string;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Sector' })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Sector' }] })
   sector: Types.ObjectId[];
 
-  @Prop({ type: [Types.ObjectId], ref: 'CorpRole' })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'CorpRole' }] })
   corpRoles: Types.ObjectId[];
 
-  @Prop([{ type: Types.ObjectId, ref: 'Document' }])
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Document' }] })
   completedDocs: Types.ObjectId[];
 
   @Prop({ default: 'https://linkedin.com/'})

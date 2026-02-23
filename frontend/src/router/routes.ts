@@ -24,6 +24,9 @@ const routes: RouteRecordRaw[] = [
       { path: 'admin/docs', component: () => import('pages/DocManagerPage.vue') },
       { path: 'admin/docs/novo', component: () => import('pages/DocCreatePage.vue') },
       { path: 'admin/docs/editar/:id', component: () => import('pages/DocCreatePage.vue') },
+      { path: 'admin/users', component: () => import('pages/AdminUsersPage.vue') },
+      { path: 'admin/company', component: () => import('pages/AdminCompanyPage.vue') },
+      { path: 'admin/dashboard', component: () => import('pages/AdminDashboardPages.vue') },
     ],
   },
 

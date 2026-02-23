@@ -33,4 +33,8 @@ export class CreateDocDto {
   @IsOptional()
   @IsString()
   badgeName?: string;
+
+  @IsOptional()
+  @IsString()
+  targetSector?: string;
 }

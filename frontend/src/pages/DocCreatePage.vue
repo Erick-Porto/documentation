@@ -36,17 +36,41 @@
           </div>
         </div>
 
-        <q-select
-          v-model="tags"
-          :options="filteredTags"
-          label="Tags"
-          multiple
-          use-input
-          use-chips
-          new-value-mode="add-unique" 
-          @filter="filterTags"
-          hint="Selecione uma tag existente ou digite e aperte Enter para criar uma nova."
-        />
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-6">
+            <q-select
+              v-model="tags"
+              :options="filteredTags"
+              label="Tags"
+              multiple
+              use-input
+              use-chips
+              new-value-mode="add-unique" 
+              @filter="filterTags"
+              hint="Selecione uma tag existente ou digite e aperte Enter."
+            />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <q-select
+              outlined
+              v-model="targetSector"
+              :options="sectorOptions"
+              option-value="_id"
+              option-label="name"
+              emit-value
+              map-options
+              label="Visibilidade do Post (Setor Destino)"
+              :readonly="isRegularUser"
+              :filled="isRegularUser"
+              :hint="isRegularUser ? 'Você só pode publicar para o seu próprio setor.' : 'Escolha um setor específico ou deixe como Público.'"
+            >
+              <template v-slot:prepend>
+                <q-icon name="visibility" />
+              </template>
+            </q-select>
+          </div>
+        </div>
 
         <q-card bordered flat class="q-mt-md">
           <q-tabs v-model="tab" dense class="text-grey" active-color="primary" indicator-color="primary" align="left" narrow-indicator>
@@ -84,6 +108,22 @@ import { useQuasar } from 'quasar';
 import { api } from 'boot/axios';
 import { marked } from 'marked';
 
+// --- INTERFACES ---
+interface Sector {
+  _id: string;
+  name: string;
+}
+
+interface CurrentUser {
+  role: string;
+  sector?: Sector[];
+}
+
+interface Tags {
+  _id: string;
+  name: string;
+}
+
 interface Doc {
   _id: string;
   title: string;
@@ -93,18 +133,15 @@ interface Doc {
   icon?: string;
   badgeName?: string;
   badgeIcon?: string;
+  targetSector?: Sector | string | null; // Adicionado
 }
 
-interface Tags {
-  _id: string;
-  name: string;
-}
-
+// --- CONFIGURAÇÕES BASE ---
 const $q = useQuasar();
 const router = useRouter();
 const route = useRoute();
 
-const icon = ref('')
+const icon = ref('');
 const title = ref('');
 const slug = ref('');
 const tags = ref<string[]>([]);
@@ -114,19 +151,49 @@ const loading = ref(false);
 const badgeName = ref('Leitor Curioso');
 const badgeIcon = ref('military_tech');
 
+// Novos controles de Setor e Usuário
+const targetSector = ref<string | null>(null);
+const currentUser = ref<CurrentUser | null>(null);
+const sectors = ref<Sector[]>([]);
+
 const isEditing = ref(false);
 const editingId = ref('');
 
 const allTags = ref<string[]>([]);
 const filteredTags = ref<string[]>([]);
 
-const fetchTags = async () => {
+// --- REGRAS DE NEGÓCIO DE VISIBILIDADE ---
+const isRegularUser = computed(() => currentUser.value?.role === 'user');
+
+const sectorOptions = computed(() => {
+    const options: { _id: string | null; name: string }[] = [...sectors.value];
+    if (!isRegularUser.value) {
+      options.unshift({ _id: null, name: 'Todos os Setores (Público)' });
+    }
+  return options;
+});
+
+// --- FUNÇÕES DE BUSCA ---
+const fetchInitialData = async () => {
   try {
-    const res = await api.get('/tags');
-    allTags.value = res.data.map((tag: Tags) => tag.name);
+    const [tagsRes, userRes, sectorsRes] = await Promise.all([
+      api.get('/tags'),
+      api.get('/users/me'),
+      api.get('/sectors')
+    ]);
+    
+    allTags.value = tagsRes.data.map((tag: Tags) => tag.name);
+    currentUser.value = userRes.data;
+    sectors.value = sectorsRes.data;
+
+    // Se for um novo documento e o usuário for 'User', já trava no setor dele
+    if (!isEditing.value && isRegularUser.value) {
+      targetSector.value = currentUser.value?.sector?.[0]?._id || null;
+    }
+
   } catch (error) {
-    console.error('Erro ao buscar tags:', error);
-    $q.notify({ type: 'warning', message: 'Não foi possível carregar a lista de tags existentes.' });
+    console.error('Erro ao buscar dados iniciais:', error);
+    $q.notify({ type: 'warning', message: 'Erro ao carregar dados complementares.' });
   }
 };
 
@@ -143,16 +210,18 @@ const filterTags = (val: string, update: (fn: () => void) => void) => {
   });
 };
 
+// --- CICLO DE VIDA ---
 onMounted(async () => {
-  void fetchTags();
-
   const idParam = route.params.id;
-  
   if (idParam) {
     isEditing.value = true;
     editingId.value = idParam as string;
-    loading.value = true;
+  }
 
+  loading.value = true;
+  await fetchInitialData(); // Busca usuário, tags e setores primeiro
+
+  if (isEditing.value) {
     try {
       const response = await api.get<Doc[]>('/docs');
       const docToEdit = response.data.find(d => d._id === editingId.value);
@@ -167,16 +236,21 @@ onMounted(async () => {
         icon.value = docToEdit.icon || 'article';
         badgeName.value = docToEdit.badgeName || 'Leitor Curioso';
         badgeIcon.value = docToEdit.badgeIcon || 'military_tech';
+        
+        // Puxa o setor do banco de dados (lidando com caso de populate ou ID solto)
+        targetSector.value = typeof docToEdit.targetSector === 'object' 
+          ? (docToEdit.targetSector?._id || null) 
+          : (docToEdit.targetSector || null);
+          
       } else {
         $q.notify({ type: 'negative', message: 'Tutorial não encontrado.' });
         void router.push('/admin/docs');
       }
     } catch {
       $q.notify({ type: 'negative', message: 'Erro ao carregar os dados para edição.' });
-    } finally {
-      loading.value = false;
     }
   }
+  loading.value = false;
 });
 
 watch(title, (newTitle) => {
@@ -204,6 +278,7 @@ const getAuthorId = () => {
   return decodedPayload.sub;
 };
 
+// --- SUBMISSÃO ---
 const onSubmit = async () => {
   if (!content.value) {
     $q.notify({ type: 'warning', message: 'O conteúdo do tutorial não pode estar vazio.' });
@@ -220,7 +295,8 @@ const onSubmit = async () => {
       tags: tags.value,
       authorId: getAuthorId(),
       badgeName: badgeName.value,
-      badgeIcon: badgeIcon.value
+      badgeIcon: badgeIcon.value,
+      targetSector: targetSector.value // O setor agora vai no pacote!
     };
 
     if (isEditing.value) {

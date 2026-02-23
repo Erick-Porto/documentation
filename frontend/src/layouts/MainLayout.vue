@@ -51,9 +51,29 @@
           </q-item-section>
         </q-item>
 
+        <q-separator spaced class="q-my-md" v-if="isAdmin"/>
+        <q-item-label header class="text-weight-bold text-primary text-uppercase q-pl-md text-caption" v-if="isAdmin">
+          Administração
+        </q-item-label>
+
+        <q-item clickable v-ripple to="/admin/users" v-if="isAdmin">
+          <q-item-section avatar><q-icon name="manage_accounts" /></q-item-section>
+          <q-item-section>Gerir Usuários</q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple to="/admin/company" v-if="isAdmin">
+          <q-item-section avatar><q-icon name="domain" /></q-item-section>
+          <q-item-section>Estrutura da Empresa</q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple to="/admin/dashboard" v-if="isAdmin">
+          <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
+          <q-item-section>Dashboard</q-item-section>
+        </q-item>
+
         <q-separator spaced class="q-my-md" />
         <q-item-label header class="text-weight-bold text-primary text-uppercase q-pl-md text-caption">
-          Administração
+          Documentação
         </q-item-label>
 
         <q-item clickable v-ripple to="/admin/docs/novo" active-class="menu-active-link">
@@ -97,10 +117,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
+
+interface CurrentUser {
+  role: string;
+  name?: string;
+}
 
 const leftDrawerOpen = ref(false);
 const router = useRouter();
@@ -122,6 +147,21 @@ const logout = () => {
     void router.push('/auth/login');
   });
 };
+
+const currentUser = ref<CurrentUser | null>(null);
+
+const isAdmin = computed(() => {
+  return currentUser.value?.role === 'superadmin' || currentUser.value?.role === 'admin';
+});
+
+onMounted(async () => {
+  try {
+    const response = await api.get('/users/me');
+    currentUser.value = response.data;
+  } catch (error) {
+    console.error('Erro ao identificar usuário logado no layout', error);
+  }
+});
 </script>
 
 <style lang="scss">

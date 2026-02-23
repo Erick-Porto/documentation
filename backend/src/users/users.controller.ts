@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Public } from 'src/auth/decorators/public.decorator';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
@@ -31,30 +32,31 @@ export class UsersController {
   }
 
   @Post()
+  @Public()
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  @Roles('Superadmin', 'admin')
+  @Roles('superadmin', 'admin')
   async findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @Roles('Superadmin', 'admin')
+  @Roles('superadmin', 'admin')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
     
   @Patch(':id')
-  @Roles('Superadmin')
+  @Roles('superadmin')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles('Superadmin')
+  @Roles('superadmin')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

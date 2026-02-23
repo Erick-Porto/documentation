@@ -26,4 +26,23 @@ export class SectorsService {
       throw new NotFoundException('Setor não encontrado.');
     }
   }
+  
+  async update(id: string, name: string): Promise<Sector> {
+    // Verifica se já existe outro setor com esse mesmo nome
+    const existing = await this.sectorModel.findOne({ name, _id: { $ne: id } }).exec();
+    if (existing) {
+      throw new ConflictException(`O setor "${name}" já existe.`);
+    }
+
+    const updatedSector = await this.sectorModel.findByIdAndUpdate(
+      id,
+      { name },
+      { new: true }
+    ).exec();
+
+    if (!updatedSector) {
+      throw new NotFoundException('Setor não encontrado.');
+    }
+    return updatedSector;
+  }
 }

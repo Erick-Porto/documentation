@@ -31,6 +31,9 @@ export class Document {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   updatedBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Sector', default: null })
+  targetSector: Types.ObjectId;
 }
 
 export const DocumentSchema = SchemaFactory.createForClass(Document);

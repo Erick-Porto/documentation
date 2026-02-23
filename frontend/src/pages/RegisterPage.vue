@@ -45,13 +45,6 @@
             label="LinkedIn (caso não preencha seu perfil ficará com o link da home da plataforma)" 
           />
 
-          <q-input 
-            outlined 
-            v-model="corp_role" 
-            type="text" 
-            label="Cargo na empresa (ex: Coordenador de TI, Analista de TI, Tecnico de TI, etc.)"
-          />
-
           <div class="q-mt-lg">
             <q-btn label="Cadastrar" type="submit" color="primary" class="full-width" size="lg" :loading="loading" />
           </div>
@@ -78,7 +71,6 @@ import { isAxiosError } from 'axios';
 const name = ref('');
 const email = ref('');
 const password = ref('');
-const corp_role = ref('');
 const linkedin = ref('');
 const loading = ref(false);
 const router = useRouter();
@@ -91,7 +83,6 @@ const onSubmit = async () => {
       name: name.value,
       email: email.value,
       password: password.value,
-      corp_role: corp_role.value,
       linkedin: linkedin.value
     });
 

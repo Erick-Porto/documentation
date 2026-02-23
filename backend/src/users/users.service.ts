@@ -27,13 +27,20 @@ export class UsersService {
         return userObj as User;
     }
 
-    async findAll(): Promise<User[]> {
-        return this.userModel
-        .find()
-        .populate('sector corpRoles')
-        .select('-password')
-        .exec();
-    }
+    async findAll(): Promise<any[]> {
+    const users = await this.userModel
+      .find()
+      .populate('sector corpRoles')
+      .select('-password')
+      .lean()
+      .exec();
+
+    const allProgress = await this.progressModel.find().lean().exec();
+    return users.map(user => ({
+      ...user,
+      progress: allProgress.filter(p => p.userId.toString() === user._id.toString())
+    }));
+  }
 
     async findOne(id: string): Promise<User> {
         const user = await this.userModel
@@ -51,7 +58,6 @@ export class UsersService {
         const user = await this.userModel
         .findOne({ email })
         .populate('sector corpRoles')
-        .select('-password')
         .exec();
 
         if (!user) {
@@ -110,11 +116,21 @@ export class UsersService {
     }
 
   async getProfile(userId: string): Promise<any> {
-    const user = await this.userModel.findById(userId).select('-password').lean().exec();
+    const user = await this.userModel
+      .findById(userId)
+      .populate('sector corpRoles')
+      .select('-password')
+      .lean()
+      .exec();
+      
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
     const progressHistory = await this.progressModel
       .find({ userId: new Types.ObjectId(userId) })
+      .populate({
+        path: 'docId',
+        select: 'title badgeIcon badgeName targetSector',
+      })
       .lean()
       .exec();
 
