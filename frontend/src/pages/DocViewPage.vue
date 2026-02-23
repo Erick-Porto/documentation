@@ -136,8 +136,16 @@ interface Doc {
   createdAt: string;
   badgeName?: string;
   badgeIcon?: string;
-  authorId?: { _id: string; name: string; linkedin?: string; corp_role?: string };
+  authorId?: Author;
 }
+
+interface Author { 
+  _id: string; 
+  name: string; 
+  linkedin?: string; 
+  corp_role?: string;
+  corpRoles?: { name: string }[]; 
+};
 
 const route = useRoute();
 const $q = useQuasar();
@@ -215,7 +223,7 @@ const exportToWord = async () => {
   $q.loading.show({ message: 'Empacotando DOCX oficial...' });
 
   try {
-    const author = doc.value?.authorId as any;
+    const author = doc.value?.authorId;
     const authorName = author?.name || 'Sistema';
     const authorRole = author?.corp_role || (author?.corpRoles && author.corpRoles.length > 0 ? author.corpRoles[0].name : 'Equipe CFCSN');
 
