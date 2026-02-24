@@ -1,19 +1,26 @@
-# Usa a imagem padrão do Node
-FROM node:20
+FROM node:20 AS build-stage
 
 WORKDIR /app
 
-# Instala o CLI do Quasar globalmente
-RUN npm install -g @quasar/cli
-
-# Copia TODOS os arquivos do projeto primeiro (incluindo o quasar.config.js)
 COPY . .
 
-# Agora sim, roda o install! O Quasar vai achar os arquivos e o postinstall vai brilhar.
 RUN npm install
 
-# A porta padrão do servidor de desenvolvimento do Quasar
-EXPOSE 3000
+RUN npx quasar build
 
-# Roda o projeto em modo de desenvolvimento
-CMD ["quasar", "dev"]
+FROM nginx:alpine AS production-stage
+
+COPY --from=build-stage /app/dist/spa /usr/share/nginx/html
+
+RUN echo "server { \
+	listen 80; \
+	location / { \
+		root /usr/share/nginx/html; \
+		index index.html index.htm; \
+		try_files \$uri \$uri/ /index.html; \
+	} \
+}" > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
