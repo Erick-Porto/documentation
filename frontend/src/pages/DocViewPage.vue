@@ -117,7 +117,7 @@ interface TocItem {
 }
 
 interface UserProgress {
-  docId: string;
+  docId: string | { _id: string }; 
   highestPercentage: number;
   isCompleted: boolean;
 }
@@ -225,7 +225,7 @@ const exportToWord = async () => {
   try {
     const author = doc.value?.authorId;
     const authorName = author?.name || 'Sistema';
-    const authorRole = author?.corp_role || (author?.corpRoles && author.corpRoles.length > 0 ? author.corpRoles[0].name : 'Equipe CFCSN');
+    const authorRole = author?.corp_role || author?.corpRoles?.[0]?.name || 'Equipe CFCSN';
 
     const stripEmojis = (str: string) => {
       if (!str) return '';
@@ -322,7 +322,7 @@ const fetchDocument = async () => {
       const myProgress = userRes.data.progress || [];
 
       const docProgress = myProgress.find((p: UserProgress) => {
-        const idToCompare = typeof p.docId === 'object' ? p.docId._id : p.docId;
+        const idToCompare = typeof p.docId === 'object' && p.docId !== null ? (p.docId as { _id: string })._id : p.docId;
         return idToCompare === doc.value?._id;
       });
 
