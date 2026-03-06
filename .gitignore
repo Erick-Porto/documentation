@@ -25,3 +25,7 @@ Thumbs.db
 # --- IDEs ---
 .vscode/
 .idea/
+
+docker-compose.yaml
+docker-compose.override.yaml
+Dockerfile

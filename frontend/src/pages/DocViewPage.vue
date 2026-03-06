@@ -39,7 +39,7 @@
               <div class="text-subtitle2 text-grey-7 q-mt-sm">
                 Criado por:
                 <a
-                  v-if="doc?.authorId?.linkedin"
+                  v-if="doc.authorId?.linkedin"
                   :href="doc.authorId.linkedin"
                   target="_blank"
                   class="text-primary text-weight-bold"
@@ -56,7 +56,7 @@
               </div>
 
               <div class="q-gutter-xs">
-                <q-badge v-for="tag in doc.tags" :key="tag._id" color="grey-2" text-color="grey-8">
+                <q-badge v-for="tag in doc.tags" @click="goToSearch('tag', tag.name)" :key="tag._id" color="grey-2" text-color="grey-8">
                   {{ tag.name || tag }}
                 </q-badge>
               </div>
@@ -144,7 +144,8 @@ interface Author {
   name: string; 
   linkedin?: string; 
   corp_role?: string;
-  corpRoles?: { name: string }[]; 
+  corpRoles?: { name: string }[];
+  
 };
 
 const route = useRoute();
@@ -218,7 +219,10 @@ watch(
   { immediate: true },
 );
 
-// NOVA FUNÇÃO EXPORTAR PARA WORD
+const goToSearch = (itemType: string, item:string) => {
+  void router.push(`/?${itemType}=${encodeURIComponent(item)}`);
+}
+
 const exportToWord = async () => {
   $q.loading.show({ message: 'Empacotando DOCX oficial...' });
 

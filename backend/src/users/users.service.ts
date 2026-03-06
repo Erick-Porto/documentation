@@ -90,12 +90,12 @@ export class UsersService {
     }
 
     async completeDocument(userId: string, docId: string): Promise<Progress> {
-    return this.progressModel.findOneAndUpdate(
-      { userId: new Types.ObjectId(userId), docId: new Types.ObjectId(docId) },
-      { isCompleted: true },
-      { returnDocument: 'after', upsert: true }
-    ).exec();
-  }
+        return this.progressModel.findOneAndUpdate(
+        { userId: new Types.ObjectId(userId), docId: new Types.ObjectId(docId) },
+        { isCompleted: true },
+        { returnDocument: 'after', upsert: true }
+        ).exec();
+    }
 
     async updateProgress(userId: string, docId: string, percentage: number): Promise<Progress> {
         const isCompleted = percentage >= 1;
@@ -129,11 +129,26 @@ export class UsersService {
       .find({ userId: new Types.ObjectId(userId) })
       .populate({
         path: 'docId',
-        select: 'title badgeIcon badgeName targetSector',
+        select: 'title badgeIcon badgeName targetSector slug',
       })
       .lean()
       .exec();
 
     return { ...user, progress: progressHistory };
+  }
+
+  async getFourLastDocuments(userId: string): Promise<any[]> {
+    const progressHistory = await this.progressModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .populate({
+        path: 'docId',
+        select: 'title badgeIcon badgeName targetSector slug',
+      })
+      .sort({ updatedAt: -1 })
+      .limit(4)
+      .lean()
+      .exec();
+
+    return progressHistory;
   }
 }

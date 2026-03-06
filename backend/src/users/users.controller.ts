@@ -16,6 +16,11 @@ export class UsersController {
     return this.usersService.getProfile(req.user.sub);
   }
 
+  @Get('me/docs')
+  async getFourLastDocuments(@Request() req: any) {
+    return this.usersService.getFourLastDocuments(req.user.sub);
+  }
+
   @Patch('me/progress/:docId')
   async updateProgress(
     @Request() req: any, 
@@ -50,7 +55,7 @@ export class UsersController {
   }
     
   @Patch(':id')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin', 'user')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }

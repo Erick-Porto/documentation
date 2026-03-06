@@ -36,6 +36,13 @@ body {
   &--flat {
     color: var(--q-grena-light) !important;
   }
+  &--menu {
+    color: var(--q-background-subtle) !important;
+    box-shadow: none!important;
+  }
+  &--menu::before{
+    box-shadow: none!important;
+  }
 }
 
 // Títulos e Cabeçalhos

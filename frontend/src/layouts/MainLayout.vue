@@ -3,7 +3,7 @@
     <q-header elevated class="bg-primary text-white">
       <q-toolbar class="q-py-sm">
         <q-btn
-          flat
+          menu
           dense
           round
           icon="menu"
@@ -12,11 +12,11 @@
         />
 
         <q-toolbar-title class="row items-center text-weight-bold">
-          <q-icon name="school" size="md" class="q-mr-sm" /> 
+          <q-icon name="school" size="md" class="q-mr-sm"/> 
           CFCSN | Docs
         </q-toolbar-title>
 
-        <q-btn flat rounded icon="logout" label="Sair" @click="logout" class="text-weight-bold" no-caps />
+        <q-btn menu rounded icon="logout" label="Sair" @click="logout" class="text-weight-bold" no-caps />
       </q-toolbar>
     </q-header>
 
@@ -51,6 +51,38 @@
           </q-item-section>
         </q-item>
 
+        <q-separator spaced class="q-my-md" />
+        <q-item-label header class="text-weight-bold text-primary text-uppercase q-pl-md text-caption">
+          Documentação
+        </q-item-label>
+
+        <q-item clickable v-ripple to="/admin/docs/novo" active-class="menu-active-link">
+          <q-item-section avatar>
+            <q-icon name="add_circle" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="text-weight-medium">Novo Documento</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple @click="goToSearch('autor', currentUser?.name || 'todos')" active-class="menu-active-link">
+          <q-item-section avatar>
+            <q-icon name="article" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="text-weight-medium">Meus Documentos</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple to="/admin/docs" active-class="menu-active-link">
+          <q-item-section avatar>
+            <q-icon name="settings" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="text-weight-medium">Gerir Documentos</q-item-label>
+          </q-item-section>
+        </q-item>
+
         <q-separator spaced class="q-my-md" v-if="isAdmin"/>
         <q-item-label header class="text-weight-bold text-primary text-uppercase q-pl-md text-caption" v-if="isAdmin">
           Administração
@@ -69,29 +101,6 @@
         <q-item clickable v-ripple to="/admin/dashboard" v-if="isAdmin">
           <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
           <q-item-section>Dashboard</q-item-section>
-        </q-item>
-
-        <q-separator spaced class="q-my-md" />
-        <q-item-label header class="text-weight-bold text-primary text-uppercase q-pl-md text-caption">
-          Documentação
-        </q-item-label>
-
-        <q-item clickable v-ripple to="/admin/docs/novo" active-class="menu-active-link">
-          <q-item-section avatar>
-            <q-icon name="add_circle" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label class="text-weight-medium">Novo Documento</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable v-ripple to="/admin/docs" active-class="menu-active-link">
-          <q-item-section avatar>
-            <q-icon name="settings" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label class="text-weight-medium">Gerir Documentos</q-item-label>
-          </q-item-section>
         </q-item>
       </q-list>
       <div class="q-pb-md text-center">
@@ -121,19 +130,26 @@ import { onMounted, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from 'boot/axios';
 import { useQuasar } from 'quasar';
-
+import { useLayoutStore } from 'src/stores/layout-store';
+import { storeToRefs } from 'pinia';
 interface CurrentUser {
   role: string;
   name?: string;
 }
 
-const leftDrawerOpen = ref(false);
 const router = useRouter();
 const $q = useQuasar();
 
+const layoutStore = useLayoutStore()
+const { leftDrawerOpen } = storeToRefs(layoutStore)
 const toggleLeftDrawer = () => {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
+  layoutStore.toggleLeftDrawer();
 };
+
+const goToSearch = (itemType: string, item:string) => {
+  void router.push(`/?${itemType}=${encodeURIComponent(item)}`);
+}
+
 
 const logout = () => {
   $q.dialog({

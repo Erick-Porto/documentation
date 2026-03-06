@@ -213,7 +213,7 @@
                 <td class="text-left ellipsis" style="max-width: 200px;">{{ user.name }}</td>
                 <td class="text-left">
                   <q-badge :color="user.role === 'superadmin' ? 'negative' : (user.role === 'admin' ? 'warning' : 'grey-5')">
-                    {{ user.role }}
+                    {{ user.role === 'superadmin' ? 'Super Admin' : user.role }}
                   </q-badge>
                 </td>
                 <td class="text-right text-caption text-grey-7">{{ formatDate(user.createdAt) }}</td>

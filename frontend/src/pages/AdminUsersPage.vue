@@ -23,7 +23,7 @@
               text-color="white" 
               class="text-weight-bold q-pa-xs"
             >
-              {{ props.row.role }}
+              {{ props.row.role === 'superadmin' ? 'Super Admin' : props.row.role === 'admin' ? 'Admin' : 'User' }}
             </q-badge>
           </q-td>
         </template>

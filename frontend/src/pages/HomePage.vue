@@ -1,6 +1,35 @@
 <template>
   <q-page padding class="bg-grey-1">
     <div class="row justify-center q-pt-xl q-pb-md">
+      <div class="col-12 col-sm-6 col-md-4" v-for="doc in filteredLastDocs" :key="doc._id">
+        <q-card class="cursor-pointer doc-card h-100 flex column justify-between" @click="openDoc(doc.slug)">
+          <q-card-section>
+                <div class="row items-center q-mb-sm justify-between">
+                  <div class="row items-center col-10">
+                    <q-icon :name="doc.icon || 'article'" size="md" color="primary" class="q-mr-sm" />
+                    <div class="text-h6 text-weight-bold ellipsis" style="max-width: 80%;">{{ doc.title }}</div>
+                  </div>
+                  <q-icon :name="doc.targetSector ? 'domain' : 'public'" size="sm" :color="doc.targetSector ? 'secondary' : 'positive'" :title="doc.targetSector ? doc.targetSector.name : 'Público'" />
+                </div>
+                <div class="q-gutter-xs q-mt-sm">
+                  <q-badge v-for="tag in formatTags(doc.tags)" :key="tag" color="grey-3" text-color="grey-8">
+                    {{ tag }}
+                  </q-badge>
+                </div>
+              </q-card-section>
+
+              <q-card-section class="q-pt-none text-caption text-grey-6 row justify-between items-center">
+                <div class="row items-center">
+                  <q-icon name="person" class="q-mr-xs" />
+                  {{ doc.authorId?.name || 'Sistema' }}
+                </div>
+                <div>{{ formatDate(doc.createdAt) }}</div>
+              </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
+    <div class="row justify-center q-pt-xl q-pb-md">
       <div class="col-12 col-md-8 text-center">
         <h3 class="text-weight-bold text-grey-9 q-mt-none q-mb-sm">Base de Conhecimento</h3>
         <p class="text-subtitle1 text-grey-7 q-mb-lg">Encontre tutoriais, guias e documentações da empresa.</p>
@@ -102,7 +131,7 @@
               <q-card-section>
                 <div class="row items-center q-mb-sm justify-between">
                   <div class="row items-center col-10">
-                    <q-icon :name="doc.icon || 'article'" size="md" color="primary" class="q-mr-sm" />
+                    <q-icon :name="doc.icon?.startsWith('http') ? 'img:' + doc.icon : (doc.icon || 'article')" color="primary" />
                     <div class="text-h6 text-weight-bold ellipsis" style="max-width: 80%;">{{ doc.title }}</div>
                   </div>
                   <q-icon :name="doc.targetSector ? 'domain' : 'public'" size="sm" :color="doc.targetSector ? 'secondary' : 'positive'" :title="doc.targetSector ? doc.targetSector.name : 'Público'" />
@@ -154,6 +183,7 @@ const router = useRouter();
 const route = useRoute();
 const loading = ref(true);
 const docs = ref<Doc[]>([]);
+const lastDocs = ref<Doc[]>([]);
 const currentUser = ref<CurrentUser | null>(null);
 
 // Variáveis dos Filtros
@@ -171,14 +201,16 @@ const sectorOptions = ref<{ _id: string | null; name: string }[]>([]);
 const fetchData = async () => {
   loading.value = true;
   try {
-    const [userRes, docsRes, sectorsRes] = await Promise.all([
+    const [userRes, docsRes, sectorsRes, lastDocsRes] = await Promise.all([
       api.get('/users/me'),
       api.get('/docs'),
-      api.get('/sectors')
+      api.get('/sectors'),
+      api.get('/me/docs')
     ]);
     
     currentUser.value = userRes.data;
     docs.value = docsRes.data;
+    lastDocs.value = lastDocsRes.data;
     
     // Configura as opções do filtro de Setor
     setupSectorOptions(sectorsRes.data);
@@ -210,6 +242,28 @@ const visibleDocs = computed(() => {
 
 const filteredDocs = computed(() => {
   return visibleDocs.value.filter(doc => {
+    const matchSearch = searchQuery.value 
+      ? doc.title.toLowerCase().includes(searchQuery.value.toLowerCase()) 
+      : true;
+
+    const docTags = doc.tags?.map(t => typeof t === 'string' ? t : t.name) || [];
+    const matchTag = selectedTag.value ? docTags.includes(selectedTag.value) : true;
+
+    const matchAuthor = selectedAuthor.value ? doc.authorId?._id === selectedAuthor.value : true;
+
+    let matchSector = true;
+    if (selectedSector.value === 'public') {
+      matchSector = !doc.targetSector;
+    } else if (selectedSector.value !== 'all_allowed' && selectedSector.value !== null) {
+      matchSector = doc.targetSector?._id === selectedSector.value;
+    }
+
+    return matchSearch && matchTag && matchAuthor && matchSector;
+  });
+});
+
+const filteredLastDocs = computed(() => {
+  return lastDocs.value.filter(doc => {
     const matchSearch = searchQuery.value 
       ? doc.title.toLowerCase().includes(searchQuery.value.toLowerCase()) 
       : true;

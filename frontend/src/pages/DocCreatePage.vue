@@ -72,8 +72,8 @@
           </div>
         </div>
 
-        <q-card bordered flat class="q-mt-md">
-          <q-tabs v-model="tab" dense class="text-grey" active-color="primary" indicator-color="primary" align="left" narrow-indicator>
+        <q-card bordered flat class="q-mt-md document-writer" style="min-height: 400px;">
+          <!-- <q-tabs v-model="tab" dense class="text-grey" active-color="primary" indicator-color="primary" align="left" narrow-indicator>
             <q-tab name="write" icon="edit" label="Escrever (Markdown)" />
             <q-tab name="preview" icon="visibility" label="Visualizar" />
           </q-tabs>
@@ -88,7 +88,9 @@
             <q-tab-panel name="preview">
               <div class="markdown-body" v-html="compiledMarkdown"></div>
             </q-tab-panel>
-          </q-tab-panels>
+          </q-tab-panels> -->
+          <q-input v-model="content" type="textarea" autogrow borderless class="q-pa-md text-body1 custom-textarea" placeholder="# Título Principal&#10;&#10;Escreva seu tutorial usando Markdown..." />
+          <div class="markdown-body q-pa-md" v-html="compiledMarkdown"></div>
         </q-card>
 
         <div class="row justify-end q-mt-lg">
@@ -102,11 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { api } from 'boot/axios';
 import { marked } from 'marked';
+import { useLayoutStore } from 'src/stores/layout-store';
 
 // --- INTERFACES ---
 interface Sector {
@@ -140,13 +143,12 @@ interface Doc {
 const $q = useQuasar();
 const router = useRouter();
 const route = useRoute();
-
+const layoutStore = useLayoutStore();
 const icon = ref('');
 const title = ref('');
 const slug = ref('');
 const tags = ref<string[]>([]);
 const content = ref('');
-const tab = ref('write');
 const loading = ref(false);
 const badgeName = ref('Leitor Curioso');
 const badgeIcon = ref('military_tech');
@@ -212,6 +214,7 @@ const filterTags = (val: string, update: (fn: () => void) => void) => {
 
 // --- CICLO DE VIDA ---
 onMounted(async () => {
+  layoutStore.setLeftDrawer(false);
   const idParam = route.params.id;
   if (idParam) {
     isEditing.value = true;
@@ -317,15 +320,31 @@ const onSubmit = async () => {
     loading.value = false;
   }
 };
+
+onUnmounted(() => {
+  layoutStore.setLeftDrawer(true);
+});
 </script>
 
 <style scoped>
+.document-writer{
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  background-color: var(--q-secondary);
+}
+
 .custom-textarea {
   font-family: 'Fira Code', 'Courier New', Courier, monospace;
   min-height: 400px;
+  background-color: var(--q-background-subtle);
+  width: 50%;
 }
 .markdown-body {
+  width: 50%;
+  background-color: var(--q-background-subtle);
   line-height: 1.6;
+  border-radius: 0!important;
   font-size: 16px;
   color: #333;
 }
