@@ -10,7 +10,7 @@ declare module '@vue/runtime-core' {
 }
 
 // Altere para a URL e porta corretas do seu NestJS
-const api = axios.create({ baseURL: 'http://192.168.100.81:3000' });
+const api = axios.create({ baseURL: process.env.API_URL });
 
 export default boot(({ app, router }) => {
   api.interceptors.response.use(

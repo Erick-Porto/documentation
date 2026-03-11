@@ -1,31 +1,41 @@
-# --- Dependências (Backend e Frontend) ---
+# 📦 Dependências do Node
 node_modules/
-**/node_modules/
+npm-debug.log
+yarn-error.log
 
-# --- Builds e Dist ---
-dist/
-**/dist/
-.quasar/
-**/src-cordova/
-**/src-capacitor/
-**/src-electron/
-
-# --- Logs ---
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-logs/
-*.log
-
-# --- Variáveis de Ambiente e Segredos ---
+# 🔐 Arquivos de Configuração e Segredos (CRÍTICO)
 .env
+.env.production
+.env.local
+*.pem
+*.key
+
+# 🏗️ Pastas de Build (NestJS e Quasar)
+dist/
+build/
+.quasar/
+.nest/
+
+# 🐳 Docker (Ignorar arquivos de override locais)
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.local.yml
+docker-compose.*.yml
+docker-compose.yml
+docker-compose.yaml
+dockerfile
+*/dockerfile
+*/Dockerfile
+
+# 💻 Configurações de IDEs e Sistema Operacional
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
 
-# --- IDEs ---
-.vscode/
-.idea/
+# 📝 Logs
+logs/
+*.log
 
-docker-compose.yaml
-docker-compose.override.yaml
-Dockerfile
+frontend/src/boot/axios.ts
